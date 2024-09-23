@@ -1,0 +1,92 @@
+import qrcode
+from datetime import datetime, time
+
+class SportsBookingSystem:
+    def __init__(self):
+        self.sports = {
+            'badminton': {'courts': 6, 'max_people': 12, 'max_duration': 1.5, 'booking_window': (16.5, 22)},
+            'squash': {'courts': 2, 'max_people': 4, 'max_duration': 1, 'booking_window': (16.5, 22)},
+            'chess': {'tables': 3, 'max_people': 6, 'max_duration': 2, 'booking_window': (16.5, 22)},
+            'carrom': {'boards': 3, 'max_people': 6, 'max_duration': 1.5, 'booking_window': (16.5, 22)},
+        }
+        self.bookings = {sport: [] for sport in self.sports}  # Track bookings by sport
+
+    def book_sport(self, sport, start_time, duration, people):
+        if sport not in self.sports:
+            return f"Invalid sport: {sport}"
+        
+        sport_info = self.sports[sport]
+        max_duration = sport_info['max_duration']
+        max_people = sport_info['max_people']
+        courts = sport_info.get('courts', sport_info.get('tables', sport_info.get('boards', 0)))
+        booking_window = sport_info['booking_window']
+        
+        if not (booking_window[0] <= start_time <= booking_window[1]):
+            return f"Invalid booking time: {start_time}. Must be between {booking_window[0]} and {booking_window[1]}"
+        
+        if duration > max_duration:
+            return f"Invalid duration. Max duration for {sport} is {max_duration} hours."
+        
+        if people > max_people:
+            return f"Invalid number of people. Max people for {sport} is {max_people}."
+        
+        if len(self.bookings[sport]) >= courts:
+            return f"No available {sport} courts at this time."
+
+        self.bookings[sport].append({'start_time': start_time, 'duration': duration, 'people': people})
+        return f"Successfully booked {sport} for {people} people from {start_time} for {duration} hours."
+
+def generate_qr_code(booking_info, start_time, end_time):
+ 
+    current_time = datetime.now().time()
+    if not (start_time <= current_time <= end_time):
+        return "QR Code is not valid for the current time window."
+    
+  
+    booking_data = {
+        "sport": booking_info["sport"],
+        "people": booking_info["people"],
+        "start_time": booking_info["start_time"],
+        "duration": booking_info["duration"]
+    }
+
+   
+    booking_json = str(booking_data)
+
+ 
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(booking_json)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill='black', back_color='white')
+    img.show()  # Display the QR code
+    return img  # Return the QR code image for saving or further use
+
+
+
+if __name__ == "__main__":
+    
+    booking_system = SportsBookingSystem()
+    
+  
+    print(booking_system.book_sport('badminton', 17, 1.5, 10))
+    
+ 
+    booking_info = {
+        "sport": "badminton",
+        "people": 4,
+        "start_time": "2024-09-23 17:00",
+        "duration": 1.5
+    }
+
+    
+    start_time_window = time(16, 0)
+    end_time_window = time(22, 30)
+
+   
+    generate_qr_code(booking_info, start_time_window, end_time_window)
